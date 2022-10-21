@@ -1,5 +1,8 @@
 package demo.rest.api.practice;
 
+import org.slf4j.Logger;
+import org.springframework.jdbc.core.JdbcTemplate;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +14,22 @@ public class UserRepository {
     ResultSet resultSet;
     PreparedStatement preparedStatement;
     String query;
+    private JdbcTemplate jdbcTemplate;
+    public JdbcTemplate getJdbcTemplate() {
+        return jdbcTemplate;
+    }
 
+    public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    public void create(User u1, Logger logger) {
+        query = "insert into userInfo values(?,?,?,?)";
+        int i = this.jdbcTemplate.update(query,u1.getId(),u1.getName(),u1.getMessage(),u1.getCreated());
+        if(i > 0){
+            logger.info("Inserted ID {} Data",u1.getId());
+        }
+    }
     public UserRepository() {
         String url = "jdbc:h2:tcp://localhost/~/test";
         String username = "sa";
@@ -101,28 +119,6 @@ public class UserRepository {
         return user;
     }
 
-    public void create(User u1) {
-        query = "insert into userInfo values(?,?,?,?)";
-        try {
-            preparedStatement = connection.prepareStatement(query);
-            preparedStatement.setInt(1,  u1.getId());
-            preparedStatement.setString(2,u1.getName());
-            preparedStatement.setString(3,u1.getMessage());
-            preparedStatement.setString(4,u1.getCreated());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (preparedStatement != null && connection != null) {
-                    preparedStatement.close();
-                    connection.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
     public void update(User u1) {
         query = "update userInfo set name = ?, message = ?, dateOfCreation = ? where id = ?";
         try {
