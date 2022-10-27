@@ -1,4 +1,4 @@
-package demo.rest.api.practice;
+package demo.rest.api.practices;
 
 public class User {
     private int id;

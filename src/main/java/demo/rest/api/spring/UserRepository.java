@@ -1,128 +1,78 @@
 package demo.rest.api.spring;
 
-import java.sql.*;
+import org.slf4j.Logger;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserRepository {
-    List<User> userList;
-    Connection connection = null;
-    Statement statement;
-    ResultSet resultSet;
-    PreparedStatement preparedStatement;
-    String query;
 
-    public UserRepository() {
-        String url = "jdbc:h2:tcp://localhost/~/test";
-        String username = "sa";
-        String password = "";
-        try {
-            Class.forName("org.h2.Driver");
-            connection = DriverManager.getConnection(url, username, password);
-            System.out.println("Connected");
-        } catch (SQLException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+    String query;
+    List<User> userList;
+    private JdbcTemplate jdbcTemplate;
+
+    public JdbcTemplate getJdbcTemplate() {
+        return jdbcTemplate;
     }
 
-    public List<User> getUserList() {
+    public void setJdbcTemplate(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    public void create(User u1, Logger logger) {
+        logger.info("Logger intialized to create!!");
+        query = "insert into userInfo values(?,?,?,?)";
+        int i = this.jdbcTemplate.update(query,u1.getId(),u1.getName(),u1.getMessage(),u1.getCreated());
+        if(i > 0){
+            logger.info("Inserted ID {} Data",u1.getId());
+        }else {
+            logger.info("Failed to insert ID {} Data",u1.getId());
+        }
+    }
+    public List<User> getUserList(Logger logger) {
         userList = new ArrayList<>();
         query = "select * from userInfo";
-        try {
-            if (connection.isClosed()){
-                System.out.println("Connection Closed!!");
+        return jdbcTemplate.query(query, rs -> {
+
+            while (rs.next()) {
+                User user = new User();
+                user.setId(rs.getInt("id"));
+                user.setName(rs.getString("name"));
+                user.setMessage(rs.getString("message"));
+                user.setCreated(rs.getString("dateOfCreation"));
+                userList.add(user);
             }
-        else{ try {
-                statement = connection.createStatement();
-                resultSet = statement.executeQuery(query);
-                while (resultSet.next()) {
-                    User user = new User();
-                    user.setId(resultSet.getInt("id"));
-                    user.setName(resultSet.getString("name"));
-                    user.setMessage(resultSet.getString("message"));
-                    user.setCreated(resultSet.getString("dateOfCreation"));
-                    userList.add(user);
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } finally {
-                try {
-                    if (preparedStatement != null && resultSet != null && connection != null) {
-                        preparedStatement.close();
-                        resultSet.close();
-                        connection.close();
-                    }
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return userList;
+            return userList;
+        });
     }
-
-    public User getUser(int id) {
+    public User getUser(int id,Logger logger) {
         query = "select * from userInfo where id = ?";
-        User user = new User();
-        try {
-            if (connection.isClosed()) {
-                System.out.println("Connection closed!!!");
-            } else{
-                try {
-                    preparedStatement = connection.prepareStatement(query);
-                    preparedStatement.setInt(1, id);
-                    resultSet = preparedStatement.executeQuery();
-                    if (resultSet.next()) {
-
-                        user.setId(resultSet.getInt("id"));
-                        user.setName(resultSet.getString("name"));
-                        user.setMessage(resultSet.getString("message"));
-                        user.setCreated(resultSet.getString("dateOfCreation"));
-                    } else {
-                        System.out.println("No data with ID:" + id);
-                    }
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                } finally {
-                    try {
-                        if (preparedStatement != null && resultSet != null) {
-                            preparedStatement.close();
-                            resultSet.close();
-                        }
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
-                }
-        }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        RowMapper<User> rowMapper = new RowMapperImplementation();
+        User user = this.jdbcTemplate.queryForObject(query,rowMapper,id);
         return user;
     }
-
-    public void create(User u1) {
-        query = "insert into userInfo values(?,?,?,?)";
-        try {
-            preparedStatement = connection.prepareStatement(query);
-            preparedStatement.setInt(1,  u1.getId());
-            preparedStatement.setString(2,u1.getName());
-            preparedStatement.setString(3,u1.getMessage());
-            preparedStatement.setString(4,u1.getCreated());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (preparedStatement != null && connection != null) {
-                    preparedStatement.close();
-                    connection.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-
+    public User delete(int id, Logger logger)
+    {
+        query = "delete from userInfo where id = ?";
+        int i = this.jdbcTemplate.update(query, id);
+        if(i > 0){
+            logger.info("Deleted ID {} with data!!!",id);
+        }else {
+            logger.warn("Not Deleted ID {} with data!!!",id);
         }
+        return null;
+    }
+    public User update(Logger logger,User user){
+        query = "update userInfo set name = ?, message = ?, dateOfCreation = ? where id = ?";
+        int i = this.jdbcTemplate.update(query, user.getName(), user.getMessage(), user.getCreated(), user.getId());
+        System.out.println(user.getId());
+        if(i > 0){
+            logger.info("Updated ID {} with data!!!", user.getId());
+        }else {
+            logger.warn("Not Updated ID {} with data!!!",user.getId());
+        }
+        return user;
     }
 }
