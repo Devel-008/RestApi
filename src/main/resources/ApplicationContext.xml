@@ -15,7 +15,7 @@
             <ref bean="ds"/>
         </property>
     </bean>
-    <bean class="demo.rest.api.spring.UserRepository" id="userDao">
+    <bean class="demo.api.spring.UserRepository" id="userDao">
         <property name="jdbcTemplate" ref="jdbcTemplate"/>
     </bean>
 </beans>

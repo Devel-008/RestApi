@@ -1,4 +1,4 @@
-package demo.rest.api.spring;
+package demo.api.spring;
 
 import org.slf4j.Logger;
 import org.springframework.jdbc.core.JdbcTemplate;

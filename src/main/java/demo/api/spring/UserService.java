@@ -1,4 +1,4 @@
-package demo.rest.api.spring;
+package demo.api.spring;
 
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
